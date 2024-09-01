@@ -13,12 +13,9 @@ def update_excel_file():
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
 
-    chrome_path = "/app/.chrome-for-testing/chrome-linux64/chrome"
-    chromedriver_path = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
+    chromedriver_path = "/usr/local/bin/chromedriver"
     
     service = Service(executable_path=chromedriver_path)
-    chrome_options.binary_location = chrome_path
-
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
     urls = [
