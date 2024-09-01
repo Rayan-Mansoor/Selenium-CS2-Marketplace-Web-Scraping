@@ -12,6 +12,7 @@ def update_excel_file():
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
+    chrome_options.binary_location = "/usr/bin/google-chrome"
 
     chromedriver_path = "/usr/local/bin/chromedriver"
     
