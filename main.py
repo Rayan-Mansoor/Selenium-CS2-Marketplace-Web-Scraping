@@ -1,17 +1,25 @@
 import os
 from flask import Flask, send_file
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
 import openpyxl
 
 app = Flask(__name__)
 
 def update_excel_file():
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.binary_location = "chrome"
+    chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
-    driver = webdriver.Chrome(options=chrome_options)
+
+    chrome_path = "/app/.chrome-for-testing/chrome-linux64/chrome"
+    chromedriver_path = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
+    
+    service = Service(executable_path=chromedriver_path)
+    chrome_options.binary_location = chrome_path
+
+    driver = webdriver.Chrome(service=service, options=chrome_options)
 
     urls = [
         "https://stash.clash.gg/containers/skin-cases",
