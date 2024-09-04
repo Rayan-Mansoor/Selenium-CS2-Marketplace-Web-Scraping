@@ -1,117 +1,120 @@
 import os
-from flask import Flask, send_file
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
+import time
+import gspread
+import pandas as pd
+from dotenv import load_dotenv
 from bs4 import BeautifulSoup
-import openpyxl
+from selenium import webdriver
+from selenium.webdriver.edge.options import Options
+from google.oauth2.service_account import Credentials
 
-app = Flask(__name__)
+load_dotenv()
 
-def update_excel_file():
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
+credentials_path = os.getenv('GOOGLE_CREDENTIALS_PATH')
 
-    chrome_path = "/app/.chrome-for-testing/chrome-linux64/chrome"
-    chromedriver_path = "/app/.chrome-for-testing/chromedriver-linux64/chromedriver"
-    
-    service = Service(executable_path=chromedriver_path)
-    chrome_options.binary_location = chrome_path
+scope = ["https://www.googleapis.com/auth/spreadsheets"]
+credentials = Credentials.from_service_account_file(credentials_path, scopes=scope)
+client = gspread.authorize(credentials)
 
-    driver = webdriver.Chrome(service=service, options=chrome_options)
+sheetID = "1HccDbcHhS0KjcIZaHxq2YD4fvyFAdJa4yEsifwZXGtM"
+sheet = client.open_by_key(sheetID).sheet1
 
-    urls = [
-        "https://stash.clash.gg/containers/skin-cases",
-        "https://stash.clash.gg/stickers/capsule/294/CS20-Sticker-Capsule"
-    ]
+urls = [
+    "https://stash.clash.gg/containers/skin-cases",
+    "https://stash.clash.gg/stickers/capsule/294/CS20-Sticker-Capsule"
+]
 
-    html_contents = {}
+edge_options = Options()
+edge_options.add_argument("--disable-logging")
+edge_options.add_argument("--log-level=3") 
 
-    for i, url in enumerate(urls):
-        driver.get(url)
-        html_content = driver.page_source
-        html_contents[i] = html_content
+driver = webdriver.ChromiumEdge(options= edge_options)
 
-    driver.quit()
+html_contents = {}
 
-    cases = [
-        "Kilowatt Case",
-        "Snakebite Case",
-        "Revolution Case",
-        "Dreams & Nightmares Case",
-        "Clutch Case",
-        "Danger Zone Case",
-        "Fracture Case",
-        "Prisma 2 Case",
-        "Prisma Case",
-        "CS20 Case",
-        "Spectrum 2 Case",
-        "Gamma 2 Case",
-        "Glove Case",
-        "Horizon Case",
-        "CS20 Sticker Capsule",
-        "Recoil Case",
-        "CS:GO Weapon Case 2",
-        "Operation Phoenix Weapon Case",
-        "Revolver Case",
-        "Shadow Case",
-        "Chroma 3 Case"
-    ]
+start_time = time.time()
 
-    obtained_cases = {}
+for i, url in enumerate(urls):
+    driver.get(url)
+    html_content = driver.page_source
+    html_contents[i] = html_content
 
-    # Process the first URL (Skin Cases)
-    soup = BeautifulSoup(html_contents[0], 'html.parser')
-    containers = soup.find_all('div', class_='well result-box nomargin')
+driver.quit()
 
-    for container in containers:
-        title = container.find('h4').text.strip()
-        price_container = container.find('div', 'price margin-top-sm')
-        price_text = price_container.find('p').text.strip()
-        price = price_text.replace('$', '')
+scrape_duration = time.time() - start_time
+print("Scaping Time: ",scrape_duration)
 
-        if title in cases and title not in obtained_cases:
-            obtained_cases[title] = price
+cases = [
+    "Kilowatt Case",
+    "Snakebite Case",
+    "Revolution Case",
+    "Dreams & Nightmares Case",
+    "Clutch Case",
+    "Danger Zone Case",
+    "Fracture Case",
+    "Prisma 2 Case",
+    "Prisma Case",
+    "CS20 Case",
+    "Spectrum 2 Case",
+    "Gamma 2 Case",
+    "Glove Case",
+    "Horizon Case",
+    "CS20 Sticker Capsule",
+    "Recoil Case",
+    "CS:GO Weapon Case 2",
+    "Operation Phoenix Weapon Case",
+    "Revolver Case",
+    "Shadow Case",
+    "Chroma 3 Case"
+]
 
-    # Process the second URL (Sticker Capsule)
-    soup = BeautifulSoup(html_contents[1], 'html.parser')
-    capsules = soup.find_all('div', class_='col-lg-12 text-center col-widen content-header')
+obtained_cases = {}
 
-    for capsule in capsules:
-        title_container = capsule.find('div', class_='inline-middle collapsed-top-margin')
-        title = title_container.find('h1').text.strip()
-        price_container = capsule.find('a', class_='btn btn-default market-button-item')
-        price_text = price_container.text.strip()
-        price = price_text.split()[0].replace('$', '')
+# Process the first URL (Skin Cases)
+soup = BeautifulSoup(html_contents[0], 'html.parser')
+containers = soup.find_all('div', class_='well result-box nomargin')
 
-        if title in cases and title not in obtained_cases:
-            obtained_cases[title] = price
+for container in containers:
+    title = container.find('h4').text.strip()
+    price_container = container.find('div', 'price margin-top-sm')
+    price_text = price_container.find('p').text.strip()
+    price = price_text.replace('$', '')
 
-    # Load and update the Excel file
-    workbook = openpyxl.load_workbook('CS2 Cases.xlsx')
-    sheet = workbook.active
+    if title in cases and title not in obtained_cases:
+        obtained_cases[title] = price
 
-    for row in sheet.iter_rows(min_row=2, max_row=sheet.max_row, min_col=1, max_col=6):
-        case_name = row[0].value  # Column A
-        if case_name in obtained_cases:
-            row[5].value = float(obtained_cases[case_name])  # Column F
+# Process the second URL (Sticker Capsule)
+soup = BeautifulSoup(html_contents[1], 'html.parser')
+capsules = soup.find_all('div', class_='col-lg-12 text-center col-widen content-header')
 
-    # Save the changes
-    workbook.save('CS2 Cases.xlsx')
+for capsule in capsules:
+    title_container = capsule.find('div', class_='inline-middle collapsed-top-margin')
+    title = title_container.find('h1').text.strip()
+    price_container = capsule.find('a', class_='btn btn-default market-button-item')
+    price_text = price_container.text.strip()
+    price = price_text.split()[0].replace('$', '')
 
-@app.route('/')
-def download_file():
-    # Update the Excel file before sending it
-    update_excel_file()
-    
-    # Define the path to the file
-    file_path = 'CS2 Cases.xlsx'
+    if title in cases and title not in obtained_cases:
+        obtained_cases[title] = price
 
-    # Send the file to the user
-    return send_file(file_path, as_attachment=True)
+# Update the Google Sheet with the latest prices
+case_names = sheet.col_values(1)[1:22]
 
-if __name__ == "__main__":
-    # Determine if the script is running on Heroku
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+# Prepare data for batch update
+updates = []  # List to hold all cell updates
+
+# Iterate through each case name and prepare batch update if it matches
+for i, case_name in enumerate(case_names):
+    if case_name in obtained_cases:
+        new_price = float(obtained_cases[case_name])
+        # Prepare the range and value to update
+        updates.append({'range': f'F{i + 2}', 'values': [[new_price]]})  # Column F starts at F2
+
+# Batch update the prices in the spreadsheet
+if updates:
+    sheet.batch_update(updates)
+
+print("Updated Excel file with latest prices")
+
+df = pd.DataFrame(obtained_cases.items(), columns=['Case Name', 'Price'])
+print(df)

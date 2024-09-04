@@ -1,2 +1,5 @@
 .history
 .venv
+.env
+
+credentials.json
