@@ -3,6 +3,8 @@
 Keep your CS2 container holdings and market prices synced into a Google Sheet.  
 Supports single or multiple accounts via per-account CSVs and protects existing sheets with a strict layout guard.
 
+![App Screenshot](screenshots/resultantGoogleSheet.PNG)
+
 ## ✨ Features
 
 **Single-account mode**  

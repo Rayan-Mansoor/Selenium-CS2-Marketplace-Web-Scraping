@@ -55,13 +55,13 @@ from gspread.exceptions import WorksheetNotFound
 
 # ---------- Hardcoded settings ---------- #
 
-TARGET_TAB_TITLE = "Sheet13"  # change if you want another tab name
+TARGET_TAB_TITLE = "Sheet1"  # change if you want another tab name
 
 # URLs to scrape
 URL_LISTING = "https://stash.clash.gg/containers/skin-cases"
 URL_ITEM = "https://stash.clash.gg/stickers/capsule/294/CS20-Sticker-Capsule"
 
-# Watchlists directory ONLY (no root-level fallback)
+# Watchlists directory
 WATCHLISTS_DIR = "watchlists"
 
 
