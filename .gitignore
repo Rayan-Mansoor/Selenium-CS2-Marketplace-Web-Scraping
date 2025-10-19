@@ -2,4 +2,5 @@
 .venv
 .env
 
-credentials.json
+secrets/*.json
+watchlists/*.csv
